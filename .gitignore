@@ -1,0 +1,13 @@
+bin/
+obj/
+*.user
+
+# Local SQLite catalog — machine-local, not shared via git (see AGENTS.md)
+artwork.db
+artwork.db-shm
+artwork.db-wal
+artwork.db.bak-*
+
+
+# appSettings
+appsettings.json
