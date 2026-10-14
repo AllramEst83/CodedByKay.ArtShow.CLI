@@ -35,9 +35,15 @@ namespace CodedByKay.ArtShow.CLI.Data.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DisplayR2Key")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Groups")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("Height")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Medium")
                         .HasColumnType("TEXT");
@@ -66,6 +72,9 @@ namespace CodedByKay.ArtShow.CLI.Data.Migrations
                     b.Property<string>("VideoId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("Width")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("Artworks");
@@ -77,6 +86,12 @@ namespace CodedByKay.ArtShow.CLI.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Blurb")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CoverArtworkId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -84,6 +99,9 @@ namespace CodedByKay.ArtShow.CLI.Data.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("SortOrder")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

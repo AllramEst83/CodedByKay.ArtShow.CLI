@@ -9,7 +9,7 @@ namespace CodedByKay.ArtShow.CLI.Menus;
 /// flow's R2-listing round trip isn't in the way when all you want is to look at one item.</summary>
 public static class StatusFlow
 {
-    private record Row(int Id, string Title, string Type, string Original, string Thumb, string Video);
+    private record Row(int Id, string Title, string Type, string Original, string Thumb, string Display, string Video);
 
     public static async Task RunAsync(ArtworkDbContext db, R2Client r2)
     {
@@ -22,7 +22,7 @@ public static class StatusFlow
 
         foreach (var a in artworks)
         {
-            string originalCell, thumbCell, videoCell;
+            string originalCell, thumbCell, displayCell, videoCell;
 
             if (a.IsVideo)
             {
@@ -41,7 +41,12 @@ public static class StatusFlow
                 ? "—"
                 : CheckKey(a.ThumbR2Key, r2Objects, referencedKeys, ref missingCount);
 
-            rows.Add(new Row(a.Id, a.Title, a.Type ?? "image", originalCell, thumbCell, videoCell));
+            // Display image is optional: null = original was already small enough.
+            displayCell = a.DisplayR2Key is null
+                ? "—"
+                : CheckKey(a.DisplayR2Key, r2Objects, referencedKeys, ref missingCount);
+
+            rows.Add(new Row(a.Id, a.Title, a.Type ?? "image", originalCell, thumbCell, displayCell, videoCell));
         }
 
         Paginate(rows);
@@ -66,8 +71,8 @@ public static class StatusFlow
         TablePager.Show(rows,
             newTable: () => new Table().Border(TableBorder.Rounded)
                 .AddColumn("Id").AddColumn("Title").AddColumn("Type")
-                .AddColumn("Original in R2").AddColumn("Thumb in R2").AddColumn("Video"),
-            addRow: (table, row) => table.AddRow($"#{row.Id}", row.Title.EscapeMarkup(), row.Type, row.Original, row.Thumb, row.Video),
+                .AddColumn("Original in R2").AddColumn("Thumb in R2").AddColumn("Display in R2").AddColumn("Video"),
+            addRow: (table, row) => table.AddRow($"#{row.Id}", row.Title.EscapeMarkup(), row.Type, row.Original, row.Thumb, row.Display, row.Video),
             emptyMessage: "[yellow]Catalog is empty.[/]");
 
     private static string CheckKey(string? key, Dictionary<string, long> r2Objects, HashSet<string> referencedKeys, ref int missingCount)

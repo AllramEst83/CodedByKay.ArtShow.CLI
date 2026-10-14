@@ -8,6 +8,11 @@ public static class ThumbnailGenerator
     private const int ThumbnailWebpQuality = 75;
     private const int OriginalWebpQuality = 90;
 
+    /// <summary>Long edge of the viewer's default image. MUST match the MCP's imaging.ts
+    /// (DISPLAY_LONG_EDGE / DISPLAY_WEBP_QUALITY) — the two tools share one R2 layout.</summary>
+    public const int DisplayLongEdge = 2000;
+    private const int DisplayWebpQuality = 82;
+
     /// <summary>Resizes to 600w (preserving aspect ratio, never upscaling) and encodes as WebP.</summary>
     public static byte[] CreateThumbnail(Stream sourceImage)
     {
@@ -21,6 +26,36 @@ public static class ThumbnailGenerator
         using var resized = original.Resize(new SKImageInfo(ThumbnailWidth, targetHeight), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear))
             ?? throw new InvalidOperationException("Could not resize image.");
         return Encode(resized, ThumbnailWebpQuality);
+    }
+
+    /// <summary>Pixel size after EXIF orientation is applied (what a viewer will actually see),
+    /// read from the codec header without decoding the pixels.</summary>
+    public static (int Width, int Height) GetOrientedSize(Stream sourceImage)
+    {
+        using var data = SKData.Create(sourceImage);
+        using var codec = SKCodec.Create(data) ?? throw new InvalidOperationException("Could not decode source image.");
+        var info = codec.Info;
+        var swapped = codec.EncodedOrigin is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
+        return swapped ? (info.Height, info.Width) : (info.Width, info.Height);
+    }
+
+    /// <summary>The viewer image: long edge scaled to <see cref="DisplayLongEdge"/> (never
+    /// upscaled). Returns null when the original is already that small — callers then store no
+    /// display key and the site falls back to the original.</summary>
+    public static byte[]? CreateDisplay(Stream sourceImage)
+    {
+        using var original = Decode(sourceImage);
+        var longEdge = Math.Max(original.Width, original.Height);
+        if (longEdge <= DisplayLongEdge)
+            return null;
+
+        var scale = DisplayLongEdge / (float)longEdge;
+        var width = (int)Math.Round(original.Width * scale);
+        var height = (int)Math.Round(original.Height * scale);
+        using var resized = original.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear))
+            ?? throw new InvalidOperationException("Could not resize image.");
+        return Encode(resized, DisplayWebpQuality);
     }
 
     /// <summary>Re-encodes as WebP at full resolution, no resize — for new (non-.webp) uploads via "Add artwork".</summary>

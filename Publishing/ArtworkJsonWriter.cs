@@ -39,5 +39,10 @@ public static class ArtworkJsonWriter
         ThumbnailUrl = a.IsVideo
             ? (a.VideoId is null ? null : $"https://img.youtube.com/vi/{a.VideoId}/hqdefault.jpg")
             : (a.ThumbR2Key is null ? null : $"{r2.PublicBaseUrl}/{a.ThumbR2Key}"),
+        Width = a.IsVideo ? null : a.Width,
+        Height = a.IsVideo ? null : a.Height,
+        DisplayUrl = a.IsVideo || a.DisplayR2Key is null ? null : $"{r2.PublicBaseUrl}/{a.DisplayR2Key}",
+        DatePrecision = MediaDerivation.DatePrecision(a.CreatedDate),
+        Media = MediaDerivation.Derive(a.Medium, a.Tags),
     };
 }

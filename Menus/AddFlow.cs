@@ -80,6 +80,7 @@ public static partial class AddFlow
             {
                 var originalKey = $"originals/{year}/{slug}.webp";
                 var thumbKey = $"thumbs/{year}/{slug}-600w.webp";
+                var displayKey = $"display/{year}/{slug}-2000w.webp";
 
                 ctx.Status("Encoding + uploading original...");
                 await using (var sourceForOriginal = File.OpenRead(filePath!))
@@ -87,6 +88,25 @@ public static partial class AddFlow
                     var originalBytes = ThumbnailGenerator.EncodeOriginalAsWebp(sourceForOriginal);
                     using var originalStream = new MemoryStream(originalBytes);
                     await r2.UploadAsync(originalKey, originalStream, "image/webp");
+                }
+
+                await using (var sourceForSize = File.OpenRead(filePath!))
+                {
+                    var (width, height) = ThumbnailGenerator.GetOrientedSize(sourceForSize);
+                    artwork.Width = width;
+                    artwork.Height = height;
+                }
+
+                ctx.Status("Generating + uploading display image...");
+                await using (var sourceForDisplay = File.OpenRead(filePath!))
+                {
+                    var displayBytes = ThumbnailGenerator.CreateDisplay(sourceForDisplay);
+                    if (displayBytes is not null)
+                    {
+                        using var displayStream = new MemoryStream(displayBytes);
+                        await r2.UploadAsync(displayKey, displayStream, "image/webp");
+                        artwork.DisplayR2Key = displayKey;
+                    }
                 }
 
                 ctx.Status("Generating + uploading thumbnail...");

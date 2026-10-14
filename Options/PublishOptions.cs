@@ -8,4 +8,6 @@ public class PublishOptions
     public string SiteRepoPath { get; set; } = @"C:\Users\kaywi\dev\CodedByKay.ArtShow";
 
     public string OutputArtworkJsonPath => Path.Combine(SiteRepoPath, "data", "artwork.json");
+
+    public string OutputCollectionsJsonPath => Path.Combine(SiteRepoPath, "data", "collections.json");
 }

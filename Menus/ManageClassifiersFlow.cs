@@ -47,19 +47,68 @@ public static class ManageClassifiersFlow
                 addRow: (table, c) => table.AddRow(c.Name.EscapeMarkup(), $"{UsageCount(artworks, kind, c.Name)} artwork(s)"),
                 emptyMessage: "[yellow]None yet.[/]");
 
+            // A group is a "collection" on the site; only groups carry presentation details.
+            var actions = kind == ClassifierKind.Group
+                ? new[] { "Add", "Rename", "Delete", "Collection details", "Back" }
+                : new[] { "Add", "Rename", "Delete", "Back" };
             var action = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("Action?")
-                    .AddChoices("Add", "Rename", "Delete", "Back"));
+                    .AddChoices(actions));
 
             switch (action)
             {
                 case "Add": await AddAsync(db, kind); break;
                 case "Rename": await RenameAsync(db, kind, classifiers); break;
                 case "Delete": await DeleteAsync(db, kind, classifiers, artworks); break;
+                case "Collection details": await EditCollectionDetailsAsync(db, classifiers, artworks); break;
                 case "Back": return;
             }
         }
+    }
+
+    /// <summary>Blurb, cover piece and display order for a group — published to
+    /// data/collections.json. Everything is optional; empty = site default.</summary>
+    private static async Task EditCollectionDetailsAsync(ArtworkDbContext db, List<Classifier> groups, List<Artwork> artworks)
+    {
+        if (groups.Count == 0)
+        {
+            AnsiConsole.MarkupLine("[yellow]No groups yet.[/]");
+            return;
+        }
+
+        var target = AnsiConsole.Prompt(
+            new SelectionPrompt<Classifier>().Title("Details for which collection?").UseConverter(c => c.Name).AddChoices(groups));
+
+        var blurb = Prompts.Ask("Blurb [grey](one line, optional)[/]:", target.Blurb, allowEmpty: true).Trim();
+        target.Blurb = blurb.Length == 0 ? null : blurb;
+
+        var orderText = Prompts.Ask("Order [grey](number, lower first; empty = by size)[/]:", target.SortOrder?.ToString(), allowEmpty: true).Trim();
+        if (orderText.Length == 0)
+            target.SortOrder = null;
+        else if (int.TryParse(orderText, out var order))
+            target.SortOrder = order;
+        else
+            AnsiConsole.MarkupLine("[yellow]Not a number — order left unchanged.[/]");
+
+        var members = artworks
+            .Where(a => !a.IsVideo && a.Groups.Any(g => string.Equals(g, target.Name, StringComparison.OrdinalIgnoreCase)))
+            .OrderBy(a => a.Id)
+            .ToList();
+        if (members.Count > 0 && AnsiConsole.Confirm("Pick a cover piece?", target.CoverArtworkId is not null))
+        {
+            var cover = ArtworkPicker.Pick(members, $"Cover for '{target.Name.EscapeMarkup()}':");
+            if (cover is not null)
+                target.CoverArtworkId = cover.Id;
+        }
+        else if (target.CoverArtworkId is not null && AnsiConsole.Confirm("Clear the cover (use newest piece)?", false))
+        {
+            target.CoverArtworkId = null;
+        }
+
+        await db.SaveChangesAsync();
+        await PublishStateStore.MarkDirtyAsync(db);
+        AnsiConsole.MarkupLine("[green]Saved.[/]");
     }
 
     private static int UsageCount(List<Artwork> artworks, string kind, string name) => kind switch

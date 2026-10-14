@@ -24,4 +24,11 @@ public class Classifier
     public int Id { get; set; }
     public string Kind { get; set; } = "";
     public string Name { get; set; } = "";
+
+    // Optional presentation details; only read for Kind == Group (a group is a "collection" on
+    // the site). Published to data/collections.json. All null = site falls back to defaults
+    // (slugified name, newest piece as cover, no blurb, ordered by size).
+    public string? Blurb { get; set; }
+    public int? CoverArtworkId { get; set; }
+    public int? SortOrder { get; set; }
 }

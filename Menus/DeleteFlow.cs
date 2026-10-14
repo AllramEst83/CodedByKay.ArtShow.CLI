@@ -29,6 +29,8 @@ public static class DeleteFlow
             await r2.DeleteAsync(selected.R2Key);
         if (selected.ThumbR2Key is not null)
             await r2.DeleteAsync(selected.ThumbR2Key);
+        if (selected.DisplayR2Key is not null)
+            await r2.DeleteAsync(selected.DisplayR2Key);
 
         db.Artworks.Remove(selected);
         await db.SaveChangesAsync();

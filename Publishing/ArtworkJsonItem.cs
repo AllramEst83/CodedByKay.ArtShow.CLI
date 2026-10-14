@@ -43,4 +43,21 @@ public class ArtworkJsonItem
 
     [JsonPropertyName("thumbnailUrl")]
     public string? ThumbnailUrl { get; set; }
+
+    // Added 2026-10 for the gallery overhaul. Appended AFTER the legacy fields so existing
+    // readers and the byte-for-byte diff against older publishes stay readable.
+    [JsonPropertyName("width")]
+    public int? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public int? Height { get; set; }
+
+    [JsonPropertyName("displayUrl")]
+    public string? DisplayUrl { get; set; }
+
+    [JsonPropertyName("datePrecision")]
+    public string? DatePrecision { get; set; }
+
+    [JsonPropertyName("media")]
+    public List<string> Media { get; set; } = [];
 }

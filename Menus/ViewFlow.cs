@@ -53,6 +53,8 @@ public static class ViewFlow
         Row("R2Key", a.R2Key);
         Row("ThumbR2Key", a.ThumbR2Key);
         Row("VideoId", a.VideoId);
+        Row("Size", a.Width is null || a.Height is null ? null : $"{a.Width} x {a.Height}");
+        Row("DisplayR2Key", a.DisplayR2Key);
 
         // Derived URLs (same formulas as Publishing/ArtworkJsonWriter.cs) — rows in the same
         // table as everything else, not printed separately outside its border.
@@ -65,6 +67,7 @@ public static class ViewFlow
         {
             Row("imageUrl", a.R2Key is null ? null : $"{r2Options.PublicBaseUrl}/{a.R2Key}");
             Row("thumbnailUrl", a.ThumbR2Key is null ? null : $"{r2Options.PublicBaseUrl}/{a.ThumbR2Key}");
+            Row("displayUrl", a.DisplayR2Key is null ? null : $"{r2Options.PublicBaseUrl}/{a.DisplayR2Key}");
         }
 
         AnsiConsole.WriteLine();
