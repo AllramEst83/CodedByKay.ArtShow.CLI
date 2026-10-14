@@ -157,6 +157,9 @@ public class Artwork
     public string OriginalPath { get; set; }   // local path at import/add time; "youtube:<id>" for video rows
     public string? R2Key { get; set; }         // bucket-relative, e.g. originals/2026/foo.webp (images only)
     public string? ThumbR2Key { get; set; }    // bucket-relative thumbnail key (images only)
+    public int? Width { get; set; }            // oriented original, px (images only; null until backfilled)
+    public int? Height { get; set; }
+    public string? DisplayR2Key { get; set; }  // ~2000px long-edge WebP; null when the original is already that small
     public string? VideoId { get; set; }       // YouTube video id (video rows only)
     public List<string> Tags { get; set; }
     public List<string> Groups { get; set; }
@@ -269,8 +272,12 @@ CodedByKay.ArtShow.CLI/
 ```
 originals/<year>/<slug>.webp
 thumbs/<year>/<slug>-600w.webp
+display/<year>/<slug>-2000w.webp   (only when the original's long edge is over 2000px)
 ```
-Year-prefixed, not flat.
+Year-prefixed, not flat. `display/` is what the site's viewer shows by default (the
+originals are scans up to ~7000px, multi-MB); the original is loaded only when the
+visitor zooms in. 2000px / WebP q82 in both this CLI and the MCP (`DisplayLongEdge`
+here, `DISPLAY_LONG_EDGE` there) — change both together.
 
 ## Video (YouTube) — decided 2026-09-11
 
@@ -367,3 +374,26 @@ Then `dotnet run` from this folder — it shows a menu, no arguments needed.
 - `CodedByKay.ArtShow.Mcp` — the MCP server that does this same workflow from
   an agent instead of this TUI; see its README and "Invariant" note above
 - `ArtShow.Workspace/AGENTS.md` — cross-repo overview
+
+
+## 2026-10 data-contract additions (gallery overhaul, Phase 4)
+
+- **`artwork.json`** items gained `width`, `height`, `displayUrl`, `datePrecision`
+  and `media[]`, appended after `thumbnailUrl` (`Publishing/ArtworkJsonItem.cs`).
+  `media[]` is derived from `Medium` + tags (`Publishing/MediaDerivation.cs`);
+  `datePrecision` is `"year"` for a January 1st, `"day"` otherwise. The same
+  patterns live in the MCP's `src/publishing/derive.ts` and the site's
+  `js/modules/data.js` fallback — keep all three identical.
+- **`data/collections.json`** (`Publishing/CollectionsJsonWriter.cs`): one entry
+  per Group classifier in use — `slug`, `name`, `blurb`, `coverId`, `order`.
+  Presentation details live on the Group's `Classifier` row (`Blurb`,
+  `CoverArtworkId`, `SortOrder`); edit them under *Manage classifiers → Group →
+  Collection details*. All optional; the site has defaults.
+- **Migration** `AddImageMetadataAndCollectionDetails` is additive/nullable.
+  Rows added before it carry no size until the MCP's `backfill_image_metadata`
+  has run (done for the live catalog 2026-10-14: 140 images, 127 display files).
+- **`ArtShow.CLI --publish`** writes both JSON files and exits (no TUI) — same
+  code path as the menu, and handy for byte-parity checks against the MCP.
+- Add / Delete / Status / View all know about the display key. **Anything that
+  decides what is "orphaned" must list `DisplayR2Key`**, or pruning deletes the
+  viewer images.
