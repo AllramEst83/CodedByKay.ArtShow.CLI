@@ -5,8 +5,10 @@
 A .NET console tool run manually from Kay's machine — **not a hosted
 service**. It is the sole writer of artwork metadata and media for the
 ArtShow site. Full architecture and rationale live in
-`CodedByKay.ArtShow/plan.md` (sibling repo) — read that first; this file
-covers only what's specific to this tool's implementation.
+`ArtShow.Workspace/AGENTS.md` (the workspace guide) — read that first; this file
+covers only what's specific to this tool's implementation. (Every `plan.md`
+mention below means the original storage-migration plan, retired 2026-10: see
+`git show b687587:docs/archive/storage-migration-plan.md` in the site repo.)
 
 ## Responsibilities
 
@@ -369,7 +371,7 @@ Then `dotnet run` from this folder — it shows a menu, no arguments needed.
 
 ## Related
 
-- `CodedByKay.ArtShow/plan.md` — full migration plan and rationale
+- the retired storage-migration plan (site repo git history, see the note at the top)
 - `CodedByKay.ArtShow` — the site repo this tool publishes into
 - `CodedByKay.ArtShow.Mcp` — the MCP server that does this same workflow from
   an agent instead of this TUI; see its README and "Invariant" note above
