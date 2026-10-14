@@ -7,9 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Spectre.Console;
 
-using var alternateScreen = new AlternateScreen();
-Console.CancelKeyPress += (_, _) => alternateScreen.Dispose(); // Ctrl+C bypasses normal unwind — restore explicitly
-
 var configuration = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true)
@@ -27,6 +24,18 @@ var dbOptions = new DbContextOptionsBuilder<ArtworkDbContext>()
 await using var db = new ArtworkDbContext(dbOptions);
 await db.Database.MigrateAsync();
 await ClassifierSeeder.SeedFromExistingArtworkAsync(db);
+
+// `ArtShow.CLI --publish`: write data/artwork.json + data/collections.json and exit, no TUI.
+// Same code path as the menu's Publish action; handy for scripting and for checking that the
+// MCP's publish produces byte-identical output.
+if (args.Contains("--publish"))
+{
+    await PublishFlow.RunAsync(db, r2Options, publishOptions);
+    return;
+}
+
+using var alternateScreen = new AlternateScreen();
+Console.CancelKeyPress += (_, _) => alternateScreen.Dispose(); // Ctrl+C bypasses normal unwind — restore explicitly
 
 AnsiConsole.Write(new FigletText("ArtShow CLI").Color(Color.SteelBlue1));
 
